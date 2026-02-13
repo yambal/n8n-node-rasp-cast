@@ -417,7 +417,7 @@ export class RaspCast implements INodeType {
 						{
 							method: 'POST',
 							url: `${serverUrl}/schedule/programs`,
-							body: { name: programName, cron, track, enabled },
+							body: { name: programName, cron, tracks: [track], enabled },
 							json: true,
 						},
 					);

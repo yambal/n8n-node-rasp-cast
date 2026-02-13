@@ -377,7 +377,7 @@ class RaspCast {
                     responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
                         method: 'POST',
                         url: `${serverUrl}/schedule/programs`,
-                        body: { name: programName, cron, track, enabled },
+                        body: { name: programName, cron, tracks: [track], enabled },
                         json: true,
                     });
                 }
