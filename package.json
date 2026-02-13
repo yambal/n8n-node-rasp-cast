@@ -1,0 +1,44 @@
+{
+  "name": "n8n-nodes-rasp-cast",
+  "version": "0.1.0",
+  "description": "n8n community node for Rasp-Cast internet radio server",
+  "keywords": [
+    "n8n-community-node-package"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "yambal"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yambal/n8n-node-rasp-cast.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/RaspCastApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/RaspCast/RaspCast.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "gulp": "^5.0.0",
+    "n8n-workflow": "^1.0.0",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
