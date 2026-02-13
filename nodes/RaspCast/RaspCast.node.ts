@@ -154,7 +154,7 @@ export class RaspCast implements INodeType {
 				},
 			},
 
-			// --- Track input (Add Track, Interrupt Play, Schedule Create) ---
+			// --- Track input (Add Track, Interrupt Play) ---
 			{
 				displayName: 'Source Type',
 				name: 'sourceType',
@@ -167,7 +167,7 @@ export class RaspCast implements INodeType {
 				description: 'Whether the track is a local file or remote URL',
 				displayOptions: {
 					show: {
-						operation: ['addTrack', 'play', 'create'],
+						operation: ['addTrack', 'play'],
 					},
 				},
 			},
@@ -181,7 +181,7 @@ export class RaspCast implements INodeType {
 				description: 'Relative path to the MP3 file on the server',
 				displayOptions: {
 					show: {
-						operation: ['addTrack', 'play', 'create'],
+						operation: ['addTrack', 'play'],
 						sourceType: ['file'],
 					},
 				},
@@ -196,7 +196,7 @@ export class RaspCast implements INodeType {
 				description: 'URL of the remote MP3 file',
 				displayOptions: {
 					show: {
-						operation: ['addTrack', 'play', 'create'],
+						operation: ['addTrack', 'play'],
 						sourceType: ['url'],
 					},
 				},
@@ -209,7 +209,7 @@ export class RaspCast implements INodeType {
 				description: 'Track title (auto-detected from ID3 tags if omitted for file type)',
 				displayOptions: {
 					show: {
-						operation: ['addTrack', 'play', 'create'],
+						operation: ['addTrack', 'play'],
 					},
 				},
 			},
@@ -221,9 +221,77 @@ export class RaspCast implements INodeType {
 				description: 'Track artist (auto-detected from ID3 tags if omitted for file type)',
 				displayOptions: {
 					show: {
-						operation: ['addTrack', 'play', 'create'],
+						operation: ['addTrack', 'play'],
 					},
 				},
+			},
+
+			// --- Schedule Tracks (multiple) ---
+			{
+				displayName: 'Tracks',
+				name: 'scheduleTracks',
+				type: 'fixedCollection',
+				typeOptions: {
+					multipleValues: true,
+				},
+				default: {},
+				placeholder: 'Add Track',
+				description: 'Tracks to include in the scheduled program',
+				displayOptions: {
+					show: {
+						resource: ['schedule'],
+						operation: ['create'],
+					},
+				},
+				options: [
+					{
+						displayName: 'Track',
+						name: 'track',
+						values: [
+							{
+								displayName: 'Source Type',
+								name: 'sourceType',
+								type: 'options',
+								options: [
+									{ name: 'File', value: 'file' },
+									{ name: 'URL', value: 'url' },
+								],
+								default: 'file',
+								description: 'Whether the track is a local file or remote URL',
+							},
+							{
+								displayName: 'File Path',
+								name: 'filePath',
+								type: 'string',
+								default: '',
+								placeholder: 'music/jingle.mp3',
+								description: 'Relative path to the MP3 file on the server (for file type)',
+							},
+							{
+								displayName: 'URL',
+								name: 'trackUrl',
+								type: 'string',
+								default: '',
+								placeholder: 'https://example.com/track.mp3',
+								description: 'URL of the remote MP3 file (for URL type)',
+							},
+							{
+								displayName: 'Title',
+								name: 'title',
+								type: 'string',
+								default: '',
+								description: 'Track title (optional, auto-detected from ID3 tags for files)',
+							},
+							{
+								displayName: 'Artist',
+								name: 'artist',
+								type: 'string',
+								default: '',
+								description: 'Track artist (optional, auto-detected from ID3 tags for files)',
+							},
+						],
+					},
+				],
 			},
 
 			// --- Playlist Replace ---
@@ -407,7 +475,21 @@ export class RaspCast implements INodeType {
 						json: true,
 					});
 				} else if (operation === 'create') {
-					const track = buildTrack(this, i);
+					const scheduleTracks = this.getNodeParameter('scheduleTracks', i) as {
+						track?: Array<{ sourceType: string; filePath?: string; trackUrl?: string; title?: string; artist?: string }>;
+					};
+					const trackItems = scheduleTracks.track ?? [];
+					const tracks = trackItems.map((t) => {
+						const track: Record<string, string> = { type: t.sourceType };
+						if (t.sourceType === 'file') {
+							track.path = t.filePath ?? '';
+						} else {
+							track.url = t.trackUrl ?? '';
+						}
+						if (t.title) track.title = t.title;
+						if (t.artist) track.artist = t.artist;
+						return track;
+					});
 					const programName = this.getNodeParameter('programName', i) as string;
 					const cron = this.getNodeParameter('cron', i) as string;
 					const enabled = this.getNodeParameter('enabled', i) as boolean;
@@ -417,7 +499,7 @@ export class RaspCast implements INodeType {
 						{
 							method: 'POST',
 							url: `${serverUrl}/schedule/programs`,
-							body: { name: programName, cron, tracks: [track], enabled },
+							body: { name: programName, cron, tracks, enabled },
 							json: true,
 						},
 					);
