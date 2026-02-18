@@ -30,12 +30,28 @@ class RaspCast {
                     type: 'options',
                     noDataExpression: true,
                     options: [
-                        { name: 'Stream', value: 'stream' },
-                        { name: 'Playlist', value: 'playlist' },
+                        { name: 'Cache', value: 'cache' },
                         { name: 'Interrupt', value: 'interrupt' },
+                        { name: 'Playlist', value: 'playlist' },
                         { name: 'Schedule', value: 'schedule' },
+                        { name: 'Stream', value: 'stream' },
                     ],
                     default: 'stream',
+                },
+                // ------ Cache Operations ------
+                {
+                    displayName: 'Operation',
+                    name: 'operation',
+                    type: 'options',
+                    noDataExpression: true,
+                    displayOptions: {
+                        show: { resource: ['cache'] },
+                    },
+                    options: [
+                        { name: 'Get Status', value: 'getStatus', description: 'Get cache status and file list', action: 'Get cache status' },
+                        { name: 'Cleanup', value: 'cleanup', description: 'Check cache integrity and remove orphaned files', action: 'Cleanup cache' },
+                    ],
+                    default: 'getStatus',
                 },
                 // ------ Stream Operations ------
                 {
@@ -94,9 +110,10 @@ class RaspCast {
                         show: { resource: ['schedule'] },
                     },
                     options: [
-                        { name: 'Get All', value: 'getAll', description: 'Get all scheduled programs', action: 'Get all scheduled programs' },
                         { name: 'Create', value: 'create', description: 'Create a scheduled program', action: 'Create scheduled program' },
                         { name: 'Delete', value: 'delete', description: 'Delete a scheduled program', action: 'Delete scheduled program' },
+                        { name: 'Get All', value: 'getAll', description: 'Get all scheduled programs', action: 'Get all scheduled programs' },
+                        { name: 'Update', value: 'update', description: 'Update a scheduled program', action: 'Update scheduled program' },
                     ],
                     default: 'getAll',
                 },
@@ -140,11 +157,29 @@ class RaspCast {
                     displayOptions: {
                         show: {
                             resource: ['schedule'],
-                            operation: ['delete'],
+                            operation: ['delete', 'update'],
                         },
                     },
                 },
-                // --- Track input (Add Track, Interrupt Play) ---
+                // --- Interrupt Mode ---
+                {
+                    displayName: 'Mode',
+                    name: 'interruptMode',
+                    type: 'options',
+                    options: [
+                        { name: 'Single Track', value: 'single' },
+                        { name: 'Multiple Tracks', value: 'multiple' },
+                    ],
+                    default: 'single',
+                    description: 'Whether to interrupt with a single track or multiple tracks',
+                    displayOptions: {
+                        show: {
+                            resource: ['interrupt'],
+                            operation: ['play'],
+                        },
+                    },
+                },
+                // --- Track input (Add Track, Interrupt Single) ---
                 {
                     displayName: 'Source Type',
                     name: 'sourceType',
@@ -157,7 +192,25 @@ class RaspCast {
                     description: 'Whether the track is a local file or remote URL',
                     displayOptions: {
                         show: {
-                            operation: ['addTrack', 'play'],
+                            operation: ['addTrack'],
+                        },
+                    },
+                },
+                {
+                    displayName: 'Source Type',
+                    name: 'sourceType',
+                    type: 'options',
+                    options: [
+                        { name: 'File', value: 'file' },
+                        { name: 'URL', value: 'url' },
+                    ],
+                    default: 'file',
+                    description: 'Whether the track is a local file or remote URL',
+                    displayOptions: {
+                        show: {
+                            resource: ['interrupt'],
+                            operation: ['play'],
+                            interruptMode: ['single'],
                         },
                     },
                 },
@@ -171,7 +224,24 @@ class RaspCast {
                     description: 'Relative path to the MP3 file on the server',
                     displayOptions: {
                         show: {
-                            operation: ['addTrack', 'play'],
+                            operation: ['addTrack'],
+                            sourceType: ['file'],
+                        },
+                    },
+                },
+                {
+                    displayName: 'File Path',
+                    name: 'filePath',
+                    type: 'string',
+                    default: '',
+                    required: true,
+                    placeholder: 'music/jingle.mp3',
+                    description: 'Relative path to the MP3 file on the server',
+                    displayOptions: {
+                        show: {
+                            resource: ['interrupt'],
+                            operation: ['play'],
+                            interruptMode: ['single'],
                             sourceType: ['file'],
                         },
                     },
@@ -186,7 +256,24 @@ class RaspCast {
                     description: 'URL of the remote MP3 file',
                     displayOptions: {
                         show: {
-                            operation: ['addTrack', 'play'],
+                            operation: ['addTrack'],
+                            sourceType: ['url'],
+                        },
+                    },
+                },
+                {
+                    displayName: 'URL',
+                    name: 'trackUrl',
+                    type: 'string',
+                    default: '',
+                    required: true,
+                    placeholder: 'https://example.com/track.mp3',
+                    description: 'URL of the remote MP3 file',
+                    displayOptions: {
+                        show: {
+                            resource: ['interrupt'],
+                            operation: ['play'],
+                            interruptMode: ['single'],
                             sourceType: ['url'],
                         },
                     },
@@ -199,7 +286,21 @@ class RaspCast {
                     description: 'Track title (auto-detected from ID3 tags if omitted for file type)',
                     displayOptions: {
                         show: {
-                            operation: ['addTrack', 'play'],
+                            operation: ['addTrack'],
+                        },
+                    },
+                },
+                {
+                    displayName: 'Title',
+                    name: 'title',
+                    type: 'string',
+                    default: '',
+                    description: 'Track title (auto-detected from ID3 tags if omitted for file type)',
+                    displayOptions: {
+                        show: {
+                            resource: ['interrupt'],
+                            operation: ['play'],
+                            interruptMode: ['single'],
                         },
                     },
                 },
@@ -211,9 +312,91 @@ class RaspCast {
                     description: 'Track artist (auto-detected from ID3 tags if omitted for file type)',
                     displayOptions: {
                         show: {
-                            operation: ['addTrack', 'play'],
+                            operation: ['addTrack'],
                         },
                     },
+                },
+                {
+                    displayName: 'Artist',
+                    name: 'artist',
+                    type: 'string',
+                    default: '',
+                    description: 'Track artist (auto-detected from ID3 tags if omitted for file type)',
+                    displayOptions: {
+                        show: {
+                            resource: ['interrupt'],
+                            operation: ['play'],
+                            interruptMode: ['single'],
+                        },
+                    },
+                },
+                // --- Interrupt Multiple Tracks ---
+                {
+                    displayName: 'Tracks',
+                    name: 'interruptTracks',
+                    type: 'fixedCollection',
+                    typeOptions: {
+                        multipleValues: true,
+                    },
+                    default: {},
+                    placeholder: 'Add Track',
+                    description: 'Tracks for interrupt playback',
+                    displayOptions: {
+                        show: {
+                            resource: ['interrupt'],
+                            operation: ['play'],
+                            interruptMode: ['multiple'],
+                        },
+                    },
+                    options: [
+                        {
+                            displayName: 'Track',
+                            name: 'track',
+                            values: [
+                                {
+                                    displayName: 'Source Type',
+                                    name: 'sourceType',
+                                    type: 'options',
+                                    options: [
+                                        { name: 'File', value: 'file' },
+                                        { name: 'URL', value: 'url' },
+                                    ],
+                                    default: 'file',
+                                    description: 'Whether the track is a local file or remote URL',
+                                },
+                                {
+                                    displayName: 'File Path',
+                                    name: 'filePath',
+                                    type: 'string',
+                                    default: '',
+                                    placeholder: 'music/jingle.mp3',
+                                    description: 'Relative path to the MP3 file on the server (for file type)',
+                                },
+                                {
+                                    displayName: 'URL',
+                                    name: 'trackUrl',
+                                    type: 'string',
+                                    default: '',
+                                    placeholder: 'https://example.com/track.mp3',
+                                    description: 'URL of the remote MP3 file (for URL type)',
+                                },
+                                {
+                                    displayName: 'Title',
+                                    name: 'title',
+                                    type: 'string',
+                                    default: '',
+                                    description: 'Track title (optional)',
+                                },
+                                {
+                                    displayName: 'Artist',
+                                    name: 'artist',
+                                    type: 'string',
+                                    default: '',
+                                    description: 'Track artist (optional)',
+                                },
+                            ],
+                        },
+                    ],
                 },
                 // --- Schedule Tracks (multiple) ---
                 {
@@ -229,7 +412,7 @@ class RaspCast {
                     displayOptions: {
                         show: {
                             resource: ['schedule'],
-                            operation: ['create'],
+                            operation: ['create', 'update'],
                         },
                     },
                     options: [
@@ -297,6 +480,33 @@ class RaspCast {
                         },
                     },
                 },
+                {
+                    displayName: 'Set Shuffle',
+                    name: 'setShuffle',
+                    type: 'boolean',
+                    default: false,
+                    description: 'Whether to change the shuffle setting',
+                    displayOptions: {
+                        show: {
+                            resource: ['playlist'],
+                            operation: ['replace'],
+                        },
+                    },
+                },
+                {
+                    displayName: 'Shuffle',
+                    name: 'shuffle',
+                    type: 'boolean',
+                    default: true,
+                    description: 'Whether to enable shuffle playback',
+                    displayOptions: {
+                        show: {
+                            resource: ['playlist'],
+                            operation: ['replace'],
+                            setShuffle: [true],
+                        },
+                    },
+                },
                 // --- Schedule Create ---
                 {
                     displayName: 'Program Name',
@@ -320,7 +530,7 @@ class RaspCast {
                     default: '0 * * * *',
                     required: true,
                     placeholder: '0 * * * *',
-                    description: 'Cron expression for scheduling (timezone: Asia/Tokyo)',
+                    description: 'Cron expression for scheduling',
                     displayOptions: {
                         show: {
                             resource: ['schedule'],
@@ -341,11 +551,67 @@ class RaspCast {
                         },
                     },
                 },
+                // --- Schedule Update ---
+                {
+                    displayName: 'Program Name',
+                    name: 'updateProgramName',
+                    type: 'string',
+                    default: '',
+                    placeholder: 'Hourly Jingle',
+                    description: 'New name for the scheduled program (leave empty to keep current)',
+                    displayOptions: {
+                        show: {
+                            resource: ['schedule'],
+                            operation: ['update'],
+                        },
+                    },
+                },
+                {
+                    displayName: 'Cron Expression',
+                    name: 'updateCron',
+                    type: 'string',
+                    default: '',
+                    placeholder: '0 * * * *',
+                    description: 'New cron expression (leave empty to keep current)',
+                    displayOptions: {
+                        show: {
+                            resource: ['schedule'],
+                            operation: ['update'],
+                        },
+                    },
+                },
+                {
+                    displayName: 'Set Enabled',
+                    name: 'updateSetEnabled',
+                    type: 'boolean',
+                    default: false,
+                    description: 'Whether to change the enabled state',
+                    displayOptions: {
+                        show: {
+                            resource: ['schedule'],
+                            operation: ['update'],
+                        },
+                    },
+                },
+                {
+                    displayName: 'Enabled',
+                    name: 'updateEnabled',
+                    type: 'boolean',
+                    default: true,
+                    description: 'Whether the scheduled program is enabled',
+                    displayOptions: {
+                        show: {
+                            resource: ['schedule'],
+                            operation: ['update'],
+                            updateSetEnabled: [true],
+                        },
+                    },
+                },
             ],
         };
     }
     async execute() {
-        var _a;
+        var _a, _b, _c;
         const items = this.getInputData();
         const returnData = [];
         const credentials = await this.getCredentials('raspCastApi');
@@ -354,8 +620,25 @@ class RaspCast {
             const resource = this.getNodeParameter('resource', i);
             const operation = this.getNodeParameter('operation', i);
             let responseData;
+            // ====== Cache ======
+            if (resource === 'cache') {
+                if (operation === 'getStatus') {
+                    responseData = await this.helpers.httpRequest({
+                        method: 'GET',
+                        url: `${serverUrl}/cache`,
+                        json: true,
+                    });
+                }
+                else if (operation === 'cleanup') {
+                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                        method: 'POST',
+                        url: `${serverUrl}/cache/cleanup`,
+                        json: true,
+                    });
+                }
+            }
             // ====== Stream ======
-            if (resource === 'stream') {
+            else if (resource === 'stream') {
                 if (operation === 'getStatus') {
                     responseData = await this.helpers.httpRequest({
                         method: 'GET',
@@ -391,10 +674,15 @@ class RaspCast {
                 else if (operation === 'replace') {
                     const tracksJson = this.getNodeParameter('tracksJson', i);
                     const tracks = typeof tracksJson === 'string' ? JSON.parse(tracksJson) : tracksJson;
+                    const body = { tracks };
+                    const setShuffle = this.getNodeParameter('setShuffle', i);
+                    if (setShuffle) {
+                        body.shuffle = this.getNodeParameter('shuffle', i);
+                    }
                     responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
                         method: 'PUT',
                         url: `${serverUrl}/playlist`,
-                        body: { tracks },
+                        body,
                         json: true,
                     });
                 }
@@ -419,11 +707,34 @@ class RaspCast {
             // ====== Interrupt ======
             else if (resource === 'interrupt') {
                 if (operation === 'play') {
-                    const track = buildTrack(this, i);
+                    const interruptMode = this.getNodeParameter('interruptMode', i);
+                    let body;
+                    if (interruptMode === 'multiple') {
+                        const interruptTracks = this.getNodeParameter('interruptTracks', i);
+                        const trackItems = (_a = interruptTracks.track) !== null && _a !== void 0 ? _a : [];
+                        body = trackItems.map((t) => {
+                            var _a, _b;
+                            const track = { type: t.sourceType };
+                            if (t.sourceType === 'file') {
+                                track.path = (_a = t.filePath) !== null && _a !== void 0 ? _a : '';
+                            }
+                            else {
+                                track.url = (_b = t.trackUrl) !== null && _b !== void 0 ? _b : '';
+                            }
+                            if (t.title)
+                                track.title = t.title;
+                            if (t.artist)
+                                track.artist = t.artist;
+                            return track;
+                        });
+                    }
+                    else {
+                        body = buildTrack(this, i);
+                    }
                     responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
                         method: 'POST',
                         url: `${serverUrl}/interrupt`,
-                        body: track,
+                        body,
                         json: true,
                     });
                 }
@@ -439,7 +750,7 @@ class RaspCast {
                 }
                 else if (operation === 'create') {
                     const scheduleTracks = this.getNodeParameter('scheduleTracks', i);
-                    const trackItems = (_a = scheduleTracks.track) !== null && _a !== void 0 ? _a : [];
+                    const trackItems = (_b = scheduleTracks.track) !== null && _b !== void 0 ? _b : [];
                     const tracks = trackItems.map((t) => {
                         var _a, _b;
                         const track = { type: t.sourceType };
@@ -462,6 +773,45 @@ class RaspCast {
                         method: 'POST',
                         url: `${serverUrl}/schedule/programs`,
                         body: { name: programName, cron, tracks, enabled },
+                        json: true,
+                    });
+                }
+                else if (operation === 'update') {
+                    const programId = this.getNodeParameter('programId', i);
+                    const body = {};
+                    const updateName = this.getNodeParameter('updateProgramName', i);
+                    if (updateName)
+                        body.name = updateName;
+                    const updateCron = this.getNodeParameter('updateCron', i);
+                    if (updateCron)
+                        body.cron = updateCron;
+                    const updateSetEnabled = this.getNodeParameter('updateSetEnabled', i);
+                    if (updateSetEnabled) {
+                        body.enabled = this.getNodeParameter('updateEnabled', i);
+                    }
+                    const scheduleTracks = this.getNodeParameter('scheduleTracks', i);
+                    const trackItems = (_c = scheduleTracks.track) !== null && _c !== void 0 ? _c : [];
+                    if (trackItems.length > 0) {
+                        body.tracks = trackItems.map((t) => {
+                            var _a, _b;
+                            const track = { type: t.sourceType };
+                            if (t.sourceType === 'file') {
+                                track.path = (_a = t.filePath) !== null && _a !== void 0 ? _a : '';
+                            }
+                            else {
+                                track.url = (_b = t.trackUrl) !== null && _b !== void 0 ? _b : '';
+                            }
+                            if (t.title)
+                                track.title = t.title;
+                            if (t.artist)
+                                track.artist = t.artist;
+                            return track;
+                        });
+                    }
+                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                        method: 'PUT',
+                        url: `${serverUrl}/schedule/programs/${programId}`,
+                        body,
                         json: true,
                     });
                 }
