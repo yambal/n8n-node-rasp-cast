@@ -616,6 +616,8 @@ class RaspCast {
         const returnData = [];
         const credentials = await this.getCredentials('raspCastApi');
         const serverUrl = credentials.serverUrl.replace(/\/$/, '');
+        const apiKey = credentials.apiKey;
+        const authHeaders = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
         for (let i = 0; i < items.length; i++) {
             const resource = this.getNodeParameter('resource', i);
             const operation = this.getNodeParameter('operation', i);
@@ -630,7 +632,8 @@ class RaspCast {
                     });
                 }
                 else if (operation === 'cleanup') {
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'POST',
                         url: `${serverUrl}/cache/cleanup`,
                         json: true,
@@ -647,7 +650,8 @@ class RaspCast {
                     });
                 }
                 else if (operation === 'skip') {
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'POST',
                         url: `${serverUrl}/skip`,
                         json: true,
@@ -655,7 +659,8 @@ class RaspCast {
                 }
                 else if (operation === 'skipTo') {
                     const trackId = this.getNodeParameter('trackId', i);
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'POST',
                         url: `${serverUrl}/skip/${trackId}`,
                         json: true,
@@ -679,7 +684,8 @@ class RaspCast {
                     if (setShuffle) {
                         body.shuffle = this.getNodeParameter('shuffle', i);
                     }
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'PUT',
                         url: `${serverUrl}/playlist`,
                         body,
@@ -688,7 +694,8 @@ class RaspCast {
                 }
                 else if (operation === 'addTrack') {
                     const track = buildTrack(this, i);
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'POST',
                         url: `${serverUrl}/playlist/tracks`,
                         body: track,
@@ -697,7 +704,8 @@ class RaspCast {
                 }
                 else if (operation === 'removeTrack') {
                     const trackId = this.getNodeParameter('trackId', i);
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'DELETE',
                         url: `${serverUrl}/playlist/tracks/${trackId}`,
                         json: true,
@@ -731,7 +739,8 @@ class RaspCast {
                     else {
                         body = buildTrack(this, i);
                     }
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'POST',
                         url: `${serverUrl}/interrupt`,
                         body,
@@ -769,7 +778,8 @@ class RaspCast {
                     const programName = this.getNodeParameter('programName', i);
                     const cron = this.getNodeParameter('cron', i);
                     const enabled = this.getNodeParameter('enabled', i);
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'POST',
                         url: `${serverUrl}/schedule/programs`,
                         body: { name: programName, cron, tracks, enabled },
@@ -808,7 +818,8 @@ class RaspCast {
                             return track;
                         });
                     }
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'PUT',
                         url: `${serverUrl}/schedule/programs/${programId}`,
                         body,
@@ -817,7 +828,8 @@ class RaspCast {
                 }
                 else if (operation === 'delete') {
                     const programId = this.getNodeParameter('programId', i);
-                    responseData = await this.helpers.httpRequestWithAuthentication.call(this, 'raspCastApi', {
+                    responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'DELETE',
                         url: `${serverUrl}/schedule/programs/${programId}`,
                         json: true,

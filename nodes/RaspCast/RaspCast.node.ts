@@ -633,6 +633,8 @@ export class RaspCast implements INodeType {
 
 		const credentials = await this.getCredentials('raspCastApi');
 		const serverUrl = (credentials.serverUrl as string).replace(/\/$/, '');
+		const apiKey = credentials.apiKey as string;
+		const authHeaders = apiKey ? { Authorization: `Bearer ${apiKey}` } : {};
 
 		for (let i = 0; i < items.length; i++) {
 			const resource = this.getNodeParameter('resource', i) as string;
@@ -649,15 +651,12 @@ export class RaspCast implements INodeType {
 						json: true,
 					});
 				} else if (operation === 'cleanup') {
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'POST',
-							url: `${serverUrl}/cache/cleanup`,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'POST',
+						url: `${serverUrl}/cache/cleanup`,
+						json: true,
+					});
 				}
 			}
 
@@ -670,26 +669,20 @@ export class RaspCast implements INodeType {
 						json: true,
 					});
 				} else if (operation === 'skip') {
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'POST',
-							url: `${serverUrl}/skip`,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'POST',
+						url: `${serverUrl}/skip`,
+						json: true,
+					});
 				} else if (operation === 'skipTo') {
 					const trackId = this.getNodeParameter('trackId', i) as string;
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'POST',
-							url: `${serverUrl}/skip/${trackId}`,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'POST',
+						url: `${serverUrl}/skip/${trackId}`,
+						json: true,
+					});
 				}
 			}
 
@@ -709,39 +702,30 @@ export class RaspCast implements INodeType {
 					if (setShuffle) {
 						body.shuffle = this.getNodeParameter('shuffle', i) as boolean;
 					}
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'PUT',
-							url: `${serverUrl}/playlist`,
-							body,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'PUT',
+						url: `${serverUrl}/playlist`,
+						body,
+						json: true,
+					});
 				} else if (operation === 'addTrack') {
 					const track = buildTrack(this, i);
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'POST',
-							url: `${serverUrl}/playlist/tracks`,
-							body: track,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'POST',
+						url: `${serverUrl}/playlist/tracks`,
+						body: track,
+						json: true,
+					});
 				} else if (operation === 'removeTrack') {
 					const trackId = this.getNodeParameter('trackId', i) as string;
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'DELETE',
-							url: `${serverUrl}/playlist/tracks/${trackId}`,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'DELETE',
+						url: `${serverUrl}/playlist/tracks/${trackId}`,
+						json: true,
+					});
 				}
 			}
 
@@ -769,16 +753,13 @@ export class RaspCast implements INodeType {
 					} else {
 						body = buildTrack(this, i);
 					}
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'POST',
-							url: `${serverUrl}/interrupt`,
-							body,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'POST',
+						url: `${serverUrl}/interrupt`,
+						body,
+						json: true,
+					});
 				}
 			}
 
@@ -809,16 +790,13 @@ export class RaspCast implements INodeType {
 					const programName = this.getNodeParameter('programName', i) as string;
 					const cron = this.getNodeParameter('cron', i) as string;
 					const enabled = this.getNodeParameter('enabled', i) as boolean;
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'POST',
-							url: `${serverUrl}/schedule/programs`,
-							body: { name: programName, cron, tracks, enabled },
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'POST',
+						url: `${serverUrl}/schedule/programs`,
+						body: { name: programName, cron, tracks, enabled },
+						json: true,
+					});
 				} else if (operation === 'update') {
 					const programId = this.getNodeParameter('programId', i) as string;
 					const body: Record<string, unknown> = {};
@@ -852,27 +830,21 @@ export class RaspCast implements INodeType {
 						});
 					}
 
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'PUT',
-							url: `${serverUrl}/schedule/programs/${programId}`,
-							body,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'PUT',
+						url: `${serverUrl}/schedule/programs/${programId}`,
+						body,
+						json: true,
+					});
 				} else if (operation === 'delete') {
 					const programId = this.getNodeParameter('programId', i) as string;
-					responseData = await this.helpers.httpRequestWithAuthentication.call(
-						this,
-						'raspCastApi',
-						{
-							method: 'DELETE',
-							url: `${serverUrl}/schedule/programs/${programId}`,
-							json: true,
-						},
-					);
+					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
+						method: 'DELETE',
+						url: `${serverUrl}/schedule/programs/${programId}`,
+						json: true,
+					});
 				}
 			}
 
