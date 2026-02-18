@@ -626,6 +626,7 @@ class RaspCast {
             if (resource === 'cache') {
                 if (operation === 'getStatus') {
                     responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'GET',
                         url: `${serverUrl}/cache`,
                         json: true,
@@ -644,6 +645,7 @@ class RaspCast {
             else if (resource === 'stream') {
                 if (operation === 'getStatus') {
                     responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'GET',
                         url: `${serverUrl}/status`,
                         json: true,
@@ -671,6 +673,7 @@ class RaspCast {
             else if (resource === 'playlist') {
                 if (operation === 'getAll') {
                     responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'GET',
                         url: `${serverUrl}/playlist`,
                         json: true,
@@ -752,6 +755,7 @@ class RaspCast {
             else if (resource === 'schedule') {
                 if (operation === 'getAll') {
                     responseData = await this.helpers.httpRequest({
+                        headers: authHeaders,
                         method: 'GET',
                         url: `${serverUrl}/schedule`,
                         json: true,

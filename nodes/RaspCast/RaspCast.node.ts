@@ -646,6 +646,7 @@ export class RaspCast implements INodeType {
 			if (resource === 'cache') {
 				if (operation === 'getStatus') {
 					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
 						method: 'GET',
 						url: `${serverUrl}/cache`,
 						json: true,
@@ -664,6 +665,7 @@ export class RaspCast implements INodeType {
 			else if (resource === 'stream') {
 				if (operation === 'getStatus') {
 					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
 						method: 'GET',
 						url: `${serverUrl}/status`,
 						json: true,
@@ -690,6 +692,7 @@ export class RaspCast implements INodeType {
 			else if (resource === 'playlist') {
 				if (operation === 'getAll') {
 					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
 						method: 'GET',
 						url: `${serverUrl}/playlist`,
 						json: true,
@@ -767,6 +770,7 @@ export class RaspCast implements INodeType {
 			else if (resource === 'schedule') {
 				if (operation === 'getAll') {
 					responseData = await this.helpers.httpRequest({
+						headers: authHeaders,
 						method: 'GET',
 						url: `${serverUrl}/schedule`,
 						json: true,
